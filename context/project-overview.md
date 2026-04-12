@@ -296,6 +296,13 @@ Payments handled via [Stripe](https://stripe.com/) — `stripeCustomerId` and `s
 - Syntax highlighting for code blocks
 - **Design references:** [Notion](https://notion.so), [Linear](https://linear.app), [Raycast](https://raycast.com)
 
+### Screenshots
+
+Refer to the screenshots below as a base for the dashboard ui. It doesn't have to be exact. Use it as a reference.
+
+- @context/screenshots/dashboard-ui-main.png
+- @context/screenshots/dashboard-ui-drawer.png
+
 ### Layout
 
 ```
