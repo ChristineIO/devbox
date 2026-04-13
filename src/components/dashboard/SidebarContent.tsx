@@ -6,9 +6,9 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { iconMap } from "@/lib/icon-map";
-import { currentUser } from "@/lib/mock-data";
 import type { SidebarItemType } from "@/lib/db/items";
 import type { SidebarCollection } from "@/lib/db/collections";
+import type { SidebarUser } from "@/lib/db/user";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,7 @@ type Props = {
   onNavigate?: () => void;
   itemTypes: SidebarItemType[];
   collections: SidebarCollection[];
+  user: SidebarUser | null;
 };
 
 function Brand({ collapsed }: { collapsed: boolean }) {
@@ -73,7 +74,16 @@ export function SidebarContent({
   onNavigate,
   itemTypes,
   collections,
+  user,
 }: Props) {
+  const displayName = user?.name ?? "Guest";
+  const displayEmail = user?.email ?? "";
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const [typesOpen, setTypesOpen] = useState(true);
   const [collectionsOpen, setCollectionsOpen] = useState(true);
 
@@ -220,21 +230,13 @@ export function SidebarContent({
         )}
       >
         <Avatar size="sm">
-          <AvatarFallback>
-            {currentUser.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .slice(0, 2)}
-          </AvatarFallback>
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         {!collapsed && (
           <div className="flex-1 min-w-0">
-            <div className="truncate text-sm font-medium">
-              {currentUser.name}
-            </div>
+            <div className="truncate text-sm font-medium">{displayName}</div>
             <div className="truncate text-xs text-muted-foreground">
-              {currentUser.email}
+              {displayEmail}
             </div>
           </div>
         )}
