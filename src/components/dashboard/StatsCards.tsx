@@ -1,6 +1,7 @@
 import { FileText, FolderOpen, Star, Bookmark, type LucideIcon } from "lucide-react";
 
-import { collections, items } from "@/lib/mock-data";
+import { getCollectionStats } from "@/lib/db/collections";
+import { getItemStats } from "@/lib/db/items";
 
 type Stat = {
   label: string;
@@ -8,18 +9,19 @@ type Stat = {
   icon: LucideIcon;
 };
 
-export function StatsCards() {
+export async function StatsCards() {
+  const [collectionStats, itemStats] = await Promise.all([
+    getCollectionStats(),
+    getItemStats(),
+  ]);
+
   const stats: Stat[] = [
-    { label: "Items", value: items.length, icon: FileText },
-    { label: "Collections", value: collections.length, icon: FolderOpen },
-    {
-      label: "Favorite Items",
-      value: items.filter((i) => i.isFavorite).length,
-      icon: Star,
-    },
+    { label: "Items", value: itemStats.total, icon: FileText },
+    { label: "Collections", value: collectionStats.total, icon: FolderOpen },
+    { label: "Favorite Items", value: itemStats.favorites, icon: Star },
     {
       label: "Favorite Collections",
-      value: collections.filter((c) => c.isFavorite).length,
+      value: collectionStats.favorites,
       icon: Bookmark,
     },
   ];
