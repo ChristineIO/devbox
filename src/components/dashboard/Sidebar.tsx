@@ -5,15 +5,17 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-is-mobile";
 import type { SidebarItemType } from "@/lib/db/items";
 import type { SidebarCollection } from "@/lib/db/collections";
+import type { SidebarUser } from "@/lib/db/user";
 import { SidebarContent } from "./SidebarContent";
 import { useSidebar } from "./SidebarContext";
 
 type Props = {
   itemTypes: SidebarItemType[];
   collections: SidebarCollection[];
+  user: SidebarUser | null;
 };
 
-export function Sidebar({ itemTypes, collections }: Props) {
+export function Sidebar({ itemTypes, collections, user }: Props) {
   const { desktopCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isMobile = useIsMobile();
 
@@ -29,6 +31,7 @@ export function Sidebar({ itemTypes, collections }: Props) {
             onNavigate={() => setMobileOpen(false)}
             itemTypes={itemTypes}
             collections={collections}
+            user={user}
           />
         </SheetContent>
       </Sheet>
@@ -46,6 +49,7 @@ export function Sidebar({ itemTypes, collections }: Props) {
         collapsed={desktopCollapsed}
         itemTypes={itemTypes}
         collections={collections}
+        user={user}
       />
     </aside>
   );
