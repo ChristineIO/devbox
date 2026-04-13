@@ -10,7 +10,7 @@ const SYSTEM_TYPES: SystemType[] = [
   { name: "snippet", icon: "Code", color: "#3b82f6" },
   { name: "prompt", icon: "Sparkles", color: "#8b5cf6" },
   { name: "command", icon: "Terminal", color: "#f97316" },
-  { name: "note", icon: "StickyNote", color: "#fde047" },
+  { name: "note", icon: "StickyNote", color: "#a855f7" },
   { name: "file", icon: "File", color: "#6b7280" },
   { name: "image", icon: "Image", color: "#ec4899" },
   { name: "link", icon: "Link", color: "#10b981" },
@@ -82,6 +82,7 @@ async function main() {
         name: "React Patterns",
         description: "Reusable React patterns and hooks",
         defaultTypeId: typeId("snippet"),
+        isFavorite: true,
       },
     });
 
@@ -108,6 +109,7 @@ async function main() {
         name: "Terminal Commands",
         description: "Useful shell commands for everyday development",
         defaultTypeId: typeId("command"),
+        isFavorite: true,
       },
     });
 
@@ -117,6 +119,15 @@ async function main() {
         name: "Design Resources",
         description: "UI/UX resources and references",
         defaultTypeId: typeId("link"),
+      },
+    });
+
+    const projectNotes = await prisma.collection.create({
+      data: {
+        userId: user.id,
+        name: "Project Notes",
+        description: "Running notes and decisions across active projects",
+        defaultTypeId: typeId("note"),
       },
     });
 
@@ -385,6 +396,35 @@ CMD ["node", "dist/index.js"]
         collectionId: designResources.id,
         description: "Consistent open-source icon set used across the app.",
         url: "https://lucide.dev/icons/",
+      },
+
+      // Project Notes — 3 notes
+      {
+        title: "Architecture decisions",
+        contentType: "text",
+        itemTypeName: "note",
+        collectionId: projectNotes.id,
+        description: "Running log of architectural choices and trade-offs.",
+        content:
+          "- Picked Next.js App Router over Pages Router for server components.\n- Chose Prisma + Neon for serverless-friendly Postgres.\n- Tailwind v4 with CSS-based theme config.",
+      },
+      {
+        title: "Weekly priorities",
+        contentType: "text",
+        itemTypeName: "note",
+        collectionId: projectNotes.id,
+        description: "What I'm focusing on this week.",
+        content:
+          "1. Finish stats + sidebar wiring.\n2. Start item detail pages.\n3. Draft auth flow.",
+      },
+      {
+        title: "Ideas parking lot",
+        contentType: "text",
+        itemTypeName: "note",
+        collectionId: projectNotes.id,
+        description: "Half-baked ideas to revisit later.",
+        content:
+          "- Global command palette (Cmd+K).\n- Inline markdown preview for notes.\n- Tag auto-suggest from existing tags.",
       },
     ];
 

@@ -3,10 +3,17 @@
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import type { SidebarItemType } from "@/lib/db/items";
+import type { SidebarCollection } from "@/lib/db/collections";
 import { SidebarContent } from "./SidebarContent";
 import { useSidebar } from "./SidebarContext";
 
-export function Sidebar() {
+type Props = {
+  itemTypes: SidebarItemType[];
+  collections: SidebarCollection[];
+};
+
+export function Sidebar({ itemTypes, collections }: Props) {
   const { desktopCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isMobile = useIsMobile();
 
@@ -18,7 +25,11 @@ export function Sidebar() {
           className="w-72 p-0 sm:max-w-xs"
           showCloseButton={false}
         >
-          <SidebarContent onNavigate={() => setMobileOpen(false)} />
+          <SidebarContent
+            onNavigate={() => setMobileOpen(false)}
+            itemTypes={itemTypes}
+            collections={collections}
+          />
         </SheetContent>
       </Sheet>
     );
@@ -31,7 +42,11 @@ export function Sidebar() {
         desktopCollapsed ? "w-14" : "w-64",
       )}
     >
-      <SidebarContent collapsed={desktopCollapsed} />
+      <SidebarContent
+        collapsed={desktopCollapsed}
+        itemTypes={itemTypes}
+        collections={collections}
+      />
     </aside>
   );
 }
