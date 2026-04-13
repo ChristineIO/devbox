@@ -93,6 +93,39 @@ export async function getRecentItems(limit = 10): Promise<ItemCardData[]> {
   return rows.map(mapItem);
 }
 
+export type SidebarItemType = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  count: number;
+};
+
+export async function getSidebarItemTypes(): Promise<SidebarItemType[]> {
+  const userId = await getDemoUserId();
+
+  const types = await prisma.itemType.findMany({
+    where: userId
+      ? { OR: [{ isSystem: true, userId: null }, { userId }] }
+      : { isSystem: true, userId: null },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, icon: true, color: true },
+  });
+
+  if (!userId) {
+    return types.map((t) => ({ ...t, count: 0 }));
+  }
+
+  const counts = await prisma.item.groupBy({
+    by: ["itemTypeId"],
+    where: { userId },
+    _count: { _all: true },
+  });
+  const countMap = new Map(counts.map((c) => [c.itemTypeId, c._count._all]));
+
+  return types.map((t) => ({ ...t, count: countMap.get(t.id) ?? 0 }));
+}
+
 export async function getItemStats(): Promise<ItemStats> {
   const userId = await getDemoUserId();
   if (!userId) return { total: 0, favorites: 0 };

@@ -6,12 +6,9 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { iconMap } from "@/lib/icon-map";
-import {
-  collections,
-  currentUser,
-  items,
-  itemTypes,
-} from "@/lib/mock-data";
+import { currentUser } from "@/lib/mock-data";
+import type { SidebarItemType } from "@/lib/db/items";
+import type { SidebarCollection } from "@/lib/db/collections";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +17,8 @@ import { Separator } from "@/components/ui/separator";
 type Props = {
   collapsed?: boolean;
   onNavigate?: () => void;
+  itemTypes: SidebarItemType[];
+  collections: SidebarCollection[];
 };
 
 function Brand({ collapsed }: { collapsed: boolean }) {
@@ -69,11 +68,12 @@ function SubHeader({ label }: { label: string }) {
   );
 }
 
-function itemCountByType(typeId: string) {
-  return items.filter((i) => i.typeId === typeId).length;
-}
-
-export function SidebarContent({ collapsed = false, onNavigate }: Props) {
+export function SidebarContent({
+  collapsed = false,
+  onNavigate,
+  itemTypes,
+  collections,
+}: Props) {
   const [typesOpen, setTypesOpen] = useState(true);
   const [collectionsOpen, setCollectionsOpen] = useState(true);
 
@@ -98,11 +98,10 @@ export function SidebarContent({ collapsed = false, onNavigate }: Props) {
             <ul className="flex flex-col gap-0.5 px-2">
               {itemTypes.map((type) => {
                 const Icon = iconMap[type.icon];
-                const count = itemCountByType(type.id);
                 return (
                   <li key={type.id}>
                     <Link
-                      href={`/items/${type.id}`}
+                      href={`/items/${type.name}`}
                       onClick={onNavigate}
                       className={cn(
                         "group flex items-center rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -118,11 +117,11 @@ export function SidebarContent({ collapsed = false, onNavigate }: Props) {
                       )}
                       {!collapsed && (
                         <>
-                          <span className="ml-2 flex-1 truncate">
+                          <span className="ml-2 flex-1 truncate capitalize">
                             {type.name}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {count}
+                            {type.count}
                           </span>
                         </>
                       )}
@@ -167,7 +166,7 @@ export function SidebarContent({ collapsed = false, onNavigate }: Props) {
 
               {recent.length > 0 && (
                 <>
-                  <SubHeader label="All Collections" />
+                  <SubHeader label="Recent" />
                   <ul className="flex flex-col gap-0.5 px-2">
                     {recent.map((col) => (
                       <li key={col.id}>
@@ -177,15 +176,37 @@ export function SidebarContent({ collapsed = false, onNavigate }: Props) {
                           className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                         >
                           <span className="flex-1 truncate">{col.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {col.itemCount}
-                          </span>
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{
+                              backgroundColor:
+                                col.mostUsedType?.color ?? "transparent",
+                              outline: col.mostUsedType
+                                ? undefined
+                                : "1px solid var(--color-border)",
+                            }}
+                            aria-label={
+                              col.mostUsedType
+                                ? `Most used type: ${col.mostUsedType.name}`
+                                : "No items"
+                            }
+                          />
                         </Link>
                       </li>
                     ))}
                   </ul>
                 </>
               )}
+
+              <div className="px-2 pt-2">
+                <Link
+                  href="/collections"
+                  onClick={onNavigate}
+                  className="flex w-full items-center rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                >
+                  View all collections
+                </Link>
+              </div>
             </div>
           )}
         </div>
