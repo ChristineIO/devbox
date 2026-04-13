@@ -3,30 +3,25 @@ import { Pin, Star } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { iconMap } from "@/lib/icon-map";
-import { itemTypes, type items } from "@/lib/mock-data";
+import type { ItemCardData } from "@/lib/db/items";
 
-type Item = (typeof items)[number];
-
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function formatDate(date: Date) {
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-export function ItemRow({ item }: { item: Item }) {
-  const type = itemTypes.find((t) => t.id === item.typeId);
-  const Icon = type ? iconMap[type.icon] : null;
+export function ItemRow({ item }: { item: ItemCardData }) {
+  const { type } = item;
+  const Icon = iconMap[type.icon] ?? null;
 
   return (
     <Link
-      href={`/items/${item.typeId}/${item.id}`}
+      href={`/items/${type.id}/${item.id}`}
       className={cn(
         "group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition hover:border-foreground/20",
       )}
-      style={
-        type ? { borderLeftColor: type.color, borderLeftWidth: 3 } : undefined
-      }
+      style={{ borderLeftColor: type.color, borderLeftWidth: 3 }}
     >
-      {Icon && type && (
+      {Icon && (
         <div
           className="flex size-9 shrink-0 items-center justify-center rounded-md"
           style={{ backgroundColor: `${type.color}1f`, color: type.color }}
@@ -49,7 +44,7 @@ export function ItemRow({ item }: { item: Item }) {
             {item.description}
           </p>
         )}
-        {item.tags && item.tags.length > 0 && (
+        {item.tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {item.tags.map((tag) => (
               <span

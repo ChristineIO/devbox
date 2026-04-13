@@ -1,12 +1,8 @@
-import { items } from "@/lib/mock-data";
+import { getRecentItems } from "@/lib/db/items";
 import { ItemRow } from "@/components/dashboard/ItemRow";
 
-const RECENT_LIMIT = 10;
-
-export function RecentItems() {
-  const recent = [...items]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, RECENT_LIMIT);
+export async function RecentItems() {
+  const recent = await getRecentItems(10);
 
   if (recent.length === 0) return null;
 
