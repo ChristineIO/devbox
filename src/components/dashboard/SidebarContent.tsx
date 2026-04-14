@@ -10,9 +10,12 @@ import type { SidebarItemType } from "@/lib/db/items";
 import type { SidebarCollection } from "@/lib/db/collections";
 import type { SidebarUser } from "@/lib/db/user";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+
+const PRO_TYPES = new Set(["file", "image"]);
 
 type Props = {
   collapsed?: boolean;
@@ -127,10 +130,18 @@ export function SidebarContent({
                       )}
                       {!collapsed && (
                         <>
-                          <span className="ml-2 flex-1 truncate capitalize">
+                          <span className="ml-2 truncate capitalize">
                             {type.name}
                           </span>
-                          <span className="text-xs text-muted-foreground">
+                          {PRO_TYPES.has(type.name) && (
+                            <Badge
+                              variant="outline"
+                              className="ml-1.5 h-4 px-1.5 text-[9px] font-semibold tracking-wider text-muted-foreground"
+                            >
+                              PRO
+                            </Badge>
+                          )}
+                          <span className="ml-auto text-xs text-muted-foreground">
                             {type.count}
                           </span>
                         </>
