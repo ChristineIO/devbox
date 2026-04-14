@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { itemTypes } from "@/lib/mock-data";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export default async function ItemsByTypePage({
   params,
@@ -8,7 +10,10 @@ export default async function ItemsByTypePage({
   params: Promise<{ type: string }>;
 }) {
   const { type } = await params;
-  const match = itemTypes.find((t) => t.id === type);
+  const match = await prisma.itemType.findFirst({
+    where: { name: decodeURIComponent(type) },
+    select: { name: true },
+  });
   if (!match) notFound();
 
   return (
