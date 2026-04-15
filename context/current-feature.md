@@ -2,21 +2,15 @@
 
 ## Status
 
-Completed
+Complete
 
 ## Goals
 
-<!-- Describe the feature's goal(s). -->
-
-## Requirements
-
-<!-- List requirements / acceptance criteria. -->
-
-## References
-
-<!-- Link to relevant spec or context files. -->
+<!-- Bullet points of what success looks like -->
 
 ## Notes
+
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
@@ -34,3 +28,5 @@ Completed
 - **2026-04-14:** Pro Badge — added ShadCN `Badge` component and rendered a subtle outline "PRO" badge next to the `file` and `image` type entries in the sidebar (hidden when collapsed); count pushed to the right with `ml-auto`. (Completed)
 - **2026-04-14:** Cleanup — deleted `src/lib/mock-data.ts` (superseded by Prisma); rewrote `/items/[type]/page.tsx` to resolve the type via Prisma by name so the sidebar links work, and added `force-dynamic`. (Completed)
 - **2026-04-15:** Audit quick wins — consolidated `getDemoUserId` into `src/lib/db/user.ts` and wrapped it in React `cache()` so repeated calls within one render pass deduplicate; removed duplicates from `items.ts` and `collections.ts`. Dropped manual `useCallback` / `useMemo` from `SidebarContext` (React Compiler handles it). Root `/` now redirects to `/dashboard`. Added composite indexes `@@index([userId, isPinned])` and `@@index([userId, isFavorite])` on `Item` via migration `add_item_boolean_indexes`. (Completed)
+- **2026-04-15:** Auth Phase 1 — installed `next-auth@beta` and `@auth/prisma-adapter`; split-config pattern with edge-safe `src/auth.config.ts` (GitHub provider) and full `src/auth.ts` (Prisma adapter + JWT strategy + session callback exposing `user.id`); handlers re-exported from `src/app/api/auth/[...nextauth]/route.ts`; `src/proxy.ts` redirects unauthenticated `/dashboard/*` requests to `/api/auth/signin` with `callbackUrl`; `src/types/next-auth.d.ts` extends `Session.user` with `id`. (Completed)
+- **2026-04-15:** Auth Phase 2 — added Credentials provider with split-config pattern: placeholder `authorize: () => null` in `src/auth.config.ts`, real bcrypt validation in `src/auth.ts` (filters the placeholder and appends the real provider). New `POST /api/auth/register` route validates name/email/password/confirmPassword with zod, rejects duplicates (409) and mismatched passwords (400), hashes with bcryptjs cost 12. Installed `zod`. (Completed)
