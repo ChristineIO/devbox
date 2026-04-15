@@ -1,56 +1,16 @@
-# Current Feature: Auth Credentials - Email/Password Provider
+# Current Feature
 
 ## Status
 
-Not Started
+Complete
 
 ## Goals
 
-- Add Credentials provider for email/password authentication
-- Use bcryptjs for password hashing (already installed)
-- Ensure `User.password` field exists via migration (if not already)
-- Update `src/auth.config.ts` with Credentials provider placeholder (`authorize: () => null`)
-- Override Credentials in `src/auth.ts` with real bcrypt validation logic
-- Create registration API route at `POST /api/auth/register`
-- Verify sign-in via email/password works and GitHub OAuth still works
-
-## Requirements
-
-Registration API route `POST /api/auth/register`:
-
-- Accept: `name`, `email`, `password`, `confirmPassword`
-- Validate passwords match
-- Check if user already exists
-- Hash password with bcryptjs
-- Create user in database
-- Return success/error response
+<!-- Bullet points of what success looks like -->
 
 ## Notes
 
-Credentials Provider in split pattern:
-
-- `auth.config.ts`: Add Credentials provider with `authorize: () => null` placeholder (keeps edge-compatible)
-- `auth.ts`: Override the Credentials provider with actual bcrypt validation logic
-
-Testing:
-
-1. Test registration via curl:
-
-```bash
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","email":"test@test.com","password":"password123","confirmPassword":"password123"}'
-```
-
-2. Go to `/api/auth/signin`
-3. Sign in with email/password
-4. Verify redirect to `/dashboard`
-5. Verify GitHub OAuth still works
-
-## References
-
-- Spec: [context/features/auth-phase-2-spec.md](context/features/auth-phase-2-spec.md)
-- Credentials provider: https://authjs.dev/getting-started/authentication/credentials
+<!-- Additional context, constraints, or details from spec -->
 
 ## History
 
@@ -69,3 +29,4 @@ curl -X POST http://localhost:3000/api/auth/register \
 - **2026-04-14:** Cleanup — deleted `src/lib/mock-data.ts` (superseded by Prisma); rewrote `/items/[type]/page.tsx` to resolve the type via Prisma by name so the sidebar links work, and added `force-dynamic`. (Completed)
 - **2026-04-15:** Audit quick wins — consolidated `getDemoUserId` into `src/lib/db/user.ts` and wrapped it in React `cache()` so repeated calls within one render pass deduplicate; removed duplicates from `items.ts` and `collections.ts`. Dropped manual `useCallback` / `useMemo` from `SidebarContext` (React Compiler handles it). Root `/` now redirects to `/dashboard`. Added composite indexes `@@index([userId, isPinned])` and `@@index([userId, isFavorite])` on `Item` via migration `add_item_boolean_indexes`. (Completed)
 - **2026-04-15:** Auth Phase 1 — installed `next-auth@beta` and `@auth/prisma-adapter`; split-config pattern with edge-safe `src/auth.config.ts` (GitHub provider) and full `src/auth.ts` (Prisma adapter + JWT strategy + session callback exposing `user.id`); handlers re-exported from `src/app/api/auth/[...nextauth]/route.ts`; `src/proxy.ts` redirects unauthenticated `/dashboard/*` requests to `/api/auth/signin` with `callbackUrl`; `src/types/next-auth.d.ts` extends `Session.user` with `id`. (Completed)
+- **2026-04-15:** Auth Phase 2 — added Credentials provider with split-config pattern: placeholder `authorize: () => null` in `src/auth.config.ts`, real bcrypt validation in `src/auth.ts` (filters the placeholder and appends the real provider). New `POST /api/auth/register` route validates name/email/password/confirmPassword with zod, rejects duplicates (409) and mismatched passwords (400), hashes with bcryptjs cost 12. Installed `zod`. (Completed)
