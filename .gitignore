@@ -42,3 +42,8 @@ next-env.d.ts
 
 # prisma — generated client is built locally / in CI
 /src/generated
+
+.claude
+
+# MCP config contains API keys — keep local
+.mcp.json
