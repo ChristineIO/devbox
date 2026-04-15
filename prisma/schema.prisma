@@ -102,6 +102,8 @@ model Item {
 
   @@index([userId])
   @@index([itemTypeId])
+  @@index([userId, isPinned])
+  @@index([userId, isFavorite])
 }
 
 model ItemType {
