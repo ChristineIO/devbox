@@ -1,7 +1,7 @@
+import { redirect } from "next/navigation";
+
+export const dynamic = "force-dynamic";
+
 export default function Home() {
-  return (
-    <main>
-      <h1>DevBox</h1>
-    </main>
-  );
+  redirect("/dashboard");
 }

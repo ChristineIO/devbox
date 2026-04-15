@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-
-const DEMO_EMAIL = "demo@devbox.io";
+import { getDemoUserId } from "@/lib/db/user";
 
 export type CollectionType = {
   id: string;
@@ -23,14 +22,6 @@ export type CollectionStats = {
   total: number;
   favorites: number;
 };
-
-async function getDemoUserId(): Promise<string | null> {
-  const user = await prisma.user.findUnique({
-    where: { email: DEMO_EMAIL },
-    select: { id: true },
-  });
-  return user?.id ?? null;
-}
 
 export async function getRecentCollections(
   limit = 6,
