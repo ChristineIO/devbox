@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Settings, Star } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
@@ -9,11 +9,10 @@ import { iconMap } from "@/lib/icon-map";
 import type { SidebarItemType } from "@/lib/db/items";
 import type { SidebarCollection } from "@/lib/db/collections";
 import type { SidebarUser } from "@/lib/db/user";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { SidebarUserMenu } from "./SidebarUserMenu";
 
 const PRO_TYPES = new Set(["file", "image"]);
 
@@ -79,14 +78,6 @@ export function SidebarContent({
   collections,
   user,
 }: Props) {
-  const displayName = user?.name ?? "Guest";
-  const displayEmail = user?.email ?? "";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
   const [typesOpen, setTypesOpen] = useState(true);
   const [collectionsOpen, setCollectionsOpen] = useState(true);
 
@@ -234,32 +225,7 @@ export function SidebarContent({
       </ScrollArea>
 
       <Separator />
-      <div
-        className={cn(
-          "flex items-center gap-2 p-3",
-          collapsed && "flex-col",
-        )}
-      >
-        <Avatar size="sm">
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
-        {!collapsed && (
-          <div className="flex-1 min-w-0">
-            <div className="truncate text-sm font-medium">{displayName}</div>
-            <div className="truncate text-xs text-muted-foreground">
-              {displayEmail}
-            </div>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Settings"
-          className="text-muted-foreground"
-        >
-          <Settings />
-        </Button>
-      </div>
+      <SidebarUserMenu user={user} collapsed={collapsed} />
     </div>
   );
 }
