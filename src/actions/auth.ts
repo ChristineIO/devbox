@@ -3,7 +3,7 @@
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth";
 
-export type ActionResult = { error: string } | undefined;
+export type ActionResult = { error: string; code?: string } | undefined;
 
 export async function signInWithCredentials(formData: FormData): Promise<ActionResult> {
   const email = String(formData.get("email") ?? "");
@@ -19,6 +19,10 @@ export async function signInWithCredentials(formData: FormData): Promise<ActionR
   } catch (error) {
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") {
+        const code = (error as unknown as { code?: string }).code;
+        if (code === "email-not-verified") {
+          return { error: "Please verify your email before signing in.", code: "email-not-verified" };
+        }
         return { error: "Invalid email or password" };
       }
       return { error: "Sign in failed. Please try again." };

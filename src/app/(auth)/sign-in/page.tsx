@@ -4,11 +4,16 @@ import { SignInForm } from "./SignInForm";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  searchParams: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams: Promise<{
+    callbackUrl?: string;
+    error?: string;
+    verified?: string;
+    registered?: string;
+  }>;
 };
 
 export default async function SignInPage({ searchParams }: Props) {
-  const { callbackUrl, error } = await searchParams;
+  const { callbackUrl, error, verified, registered } = await searchParams;
 
   return (
     <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -18,6 +23,31 @@ export default async function SignInPage({ searchParams }: Props) {
           Sign in to continue to DevBox
         </p>
       </div>
+
+      {verified === "1" && (
+        <p className="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-400">
+          Email verified! You can now sign in.
+        </p>
+      )}
+
+      {registered === "1" && (
+        <p className="mb-4 rounded-md border border-blue-500/40 bg-blue-500/10 px-3 py-2 text-center text-sm text-blue-400">
+          Account created! Check your email for a verification link.
+        </p>
+      )}
+
+      {error === "invalid-token" && (
+        <p className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
+          Verification link is invalid or expired. Try signing in to resend it.
+        </p>
+      )}
+
+      {error === "missing-token" && (
+        <p className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
+          Verification link is missing. Check your email and try again.
+        </p>
+      )}
+
       <SignInForm callbackUrl={callbackUrl} initialError={error} />
       <p className="mt-4 text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}

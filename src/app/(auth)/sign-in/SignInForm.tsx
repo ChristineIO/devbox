@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { signInWithCredentials, signInWithGithub } from "@/actions/auth";
+import { signInWithCredentials, signInWithGithub, type ActionResult } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,18 +28,41 @@ type Props = {
 
 export function SignInForm({ callbackUrl, initialError }: Props) {
   const [error, setError] = useState<string | undefined>(
-    initialError ? "Sign in failed. Please try again." : undefined,
+    initialError && initialError !== "invalid-token" && initialError !== "missing-token"
+      ? "Sign in failed. Please try again."
+      : undefined,
   );
+  const [errorCode, setErrorCode] = useState<string | undefined>();
+  const [lastEmail, setLastEmail] = useState<string>("");
   const [isPending, startTransition] = useTransition();
   const [isGithubPending, startGithubTransition] = useTransition();
+  const [isResending, startResendTransition] = useTransition();
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   function handleSubmit(formData: FormData) {
     setError(undefined);
+    setErrorCode(undefined);
+    setResendSuccess(false);
+    setLastEmail(String(formData.get("email") ?? ""));
     startTransition(async () => {
-      const result = await signInWithCredentials(formData);
+      const result: ActionResult = await signInWithCredentials(formData);
       if (result?.error) {
         setError(result.error);
+        setErrorCode(result.code);
       }
+    });
+  }
+
+  function handleResend() {
+    if (!lastEmail) return;
+    setResendSuccess(false);
+    startResendTransition(async () => {
+      await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: lastEmail }),
+      });
+      setResendSuccess(true);
     });
   }
 
@@ -97,12 +120,26 @@ export function SignInForm({ callbackUrl, initialError }: Props) {
         </div>
 
         {error && (
-          <p
+          <div
             role="alert"
             className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
           >
-            {error}
-          </p>
+            <p>{error}</p>
+            {errorCode === "email-not-verified" && lastEmail && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isResending || resendSuccess}
+                className="mt-1 text-xs underline underline-offset-2 hover:text-destructive/80 disabled:no-underline disabled:opacity-60"
+              >
+                {resendSuccess
+                  ? "Verification email sent!"
+                  : isResending
+                    ? "Sending…"
+                    : "Resend verification email"}
+              </button>
+            )}
+          </div>
         )}
 
         <Button type="submit" disabled={isPending} className="mt-1 w-full">
