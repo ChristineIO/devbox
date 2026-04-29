@@ -9,11 +9,12 @@ type Props = {
     error?: string;
     verified?: string;
     registered?: string;
+    reset?: string;
   }>;
 };
 
 export default async function SignInPage({ searchParams }: Props) {
-  const { callbackUrl, error, verified, registered } = await searchParams;
+  const { callbackUrl, error, verified, registered, reset } = await searchParams;
 
   return (
     <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -33,6 +34,12 @@ export default async function SignInPage({ searchParams }: Props) {
       {registered === "1" && (
         <p className="mb-4 rounded-md border border-blue-500/40 bg-blue-500/10 px-3 py-2 text-center text-sm text-blue-400">
           Account created! Check your email for a verification link.
+        </p>
+      )}
+
+      {reset === "1" && (
+        <p className="mb-4 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-center text-sm text-emerald-400">
+          Password reset! You can now sign in with your new password.
         </p>
       )}
 
