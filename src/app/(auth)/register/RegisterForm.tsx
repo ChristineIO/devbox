@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { signInWithCredentials } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +56,23 @@ export function RegisterForm() {
       });
 
       if (res.ok) {
-        router.push("/sign-in?registered=1");
+        const body = (await res.json().catch(() => null)) as
+          | { verificationRequired?: boolean }
+          | null;
+
+        if (body?.verificationRequired) {
+          router.push("/sign-in?registered=1");
+          return;
+        }
+
+        const signInData = new FormData();
+        signInData.set("email", data.email);
+        signInData.set("password", data.password);
+        signInData.set("callbackUrl", "/dashboard");
+        const result = await signInWithCredentials(signInData);
+        if (result?.error) {
+          router.push("/sign-in");
+        }
         return;
       }
 
