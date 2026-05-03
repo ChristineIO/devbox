@@ -1,11 +1,16 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { EMAIL_VERIFICATION_ENABLED } from "@/lib/config";
 import authConfig from "./auth.config";
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = "email-not-verified";
+}
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -45,6 +50,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
 
         const valid = await bcrypt.compare(parsed.data.password, user.password);
         if (!valid) return null;
+
+        if (EMAIL_VERIFICATION_ENABLED && !user.emailVerified) {
+          throw new EmailNotVerifiedError();
+        }
 
         return {
           id: user.id,

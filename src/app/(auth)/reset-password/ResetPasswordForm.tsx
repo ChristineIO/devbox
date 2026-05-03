@@ -3,29 +3,24 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
-import { signInWithCredentials } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type FieldErrors = Partial<Record<"name" | "email" | "password" | "confirmPassword", string>>;
+type FieldErrors = Partial<Record<"password" | "confirmPassword", string>>;
 
-export function RegisterForm() {
+type Props = {
+  token: string;
+};
+
+export function ResetPasswordForm({ token }: Props) {
   const router = useRouter();
   const [error, setError] = useState<string | undefined>();
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isPending, startTransition] = useTransition();
 
-  function validate(data: {
-    name: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-  }): FieldErrors {
+  function validate(data: { password: string; confirmPassword: string }): FieldErrors {
     const errors: FieldErrors = {};
-    if (!data.name.trim()) errors.name = "Name is required";
-    if (!data.email.trim()) errors.email = "Email is required";
-    else if (!/^\S+@\S+\.\S+$/.test(data.email)) errors.email = "Enter a valid email";
     if (data.password.length < 8) errors.password = "Password must be at least 8 characters";
     if (data.confirmPassword !== data.password) errors.confirmPassword = "Passwords do not match";
     return errors;
@@ -36,8 +31,6 @@ export function RegisterForm() {
     setFieldErrors({});
 
     const data = {
-      name: String(formData.get("name") ?? ""),
-      email: String(formData.get("email") ?? ""),
       password: String(formData.get("password") ?? ""),
       confirmPassword: String(formData.get("confirmPassword") ?? ""),
     };
@@ -49,70 +42,28 @@ export function RegisterForm() {
     }
 
     startTransition(async () => {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ token, ...data }),
       });
 
       if (res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { verificationRequired?: boolean }
-          | null;
-
-        if (body?.verificationRequired) {
-          router.push("/sign-in?registered=1");
-          return;
-        }
-
-        const signInData = new FormData();
-        signInData.set("email", data.email);
-        signInData.set("password", data.password);
-        signInData.set("callbackUrl", "/dashboard");
-        const result = await signInWithCredentials(signInData);
-        if (result?.error) {
-          router.push("/sign-in");
-        }
+        router.push("/sign-in?reset=1");
         return;
       }
 
-      const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      setError(body?.error ?? "Registration failed. Please try again.");
+      const body = (await res.json().catch(() => null)) as
+        | { error?: string; code?: string }
+        | null;
+      setError(body?.error ?? "Reset failed. Please try again.");
     });
   }
 
   return (
     <form action={handleSubmit} className="flex flex-col gap-3" noValidate>
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          name="name"
-          type="text"
-          autoComplete="name"
-          required
-          disabled={isPending}
-          aria-invalid={!!fieldErrors.name}
-        />
-        {fieldErrors.name && <p className="text-xs text-destructive">{fieldErrors.name}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          disabled={isPending}
-          aria-invalid={!!fieldErrors.email}
-        />
-        {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">New password</Label>
         <Input
           id="password"
           name="password"
@@ -128,7 +79,7 @@ export function RegisterForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <Label htmlFor="confirmPassword">Confirm new password</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
@@ -153,7 +104,7 @@ export function RegisterForm() {
       )}
 
       <Button type="submit" disabled={isPending} className="mt-1 w-full">
-        {isPending ? "Creating account…" : "Create account"}
+        {isPending ? "Resetting…" : "Reset password"}
       </Button>
     </form>
   );
