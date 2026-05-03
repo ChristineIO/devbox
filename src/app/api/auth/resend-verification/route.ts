@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/db/verification-token";
 import { sendVerificationEmail } from "@/lib/email";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const schema = z.object({
   email: z.string().email(),
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
+
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit("resendVerification", `${ip}:${parsed.data.email}`);
+  if (!rl.success) return rateLimitResponse(rl);
 
   const user = await prisma.user.findUnique({
     where: { email: parsed.data.email },
