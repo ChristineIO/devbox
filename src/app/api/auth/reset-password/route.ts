@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { consumePasswordResetToken } from "@/lib/db/password-reset-token";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const schema = z
   .object({
@@ -17,6 +18,10 @@ const schema = z
   });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit("resetPassword", ip);
+  if (!rl.success) return rateLimitResponse(rl);
+
   let body: unknown;
   try {
     body = await request.json();

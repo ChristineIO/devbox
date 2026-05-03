@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { createVerificationToken } from "@/lib/db/verification-token";
 import { sendVerificationEmail } from "@/lib/email";
 import { EMAIL_VERIFICATION_ENABLED } from "@/lib/config";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const registerSchema = z
   .object({
@@ -20,6 +21,10 @@ const registerSchema = z
   });
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rl = await checkRateLimit("register", ip);
+  if (!rl.success) return rateLimitResponse(rl);
+
   let body: unknown;
   try {
     body = await request.json();
