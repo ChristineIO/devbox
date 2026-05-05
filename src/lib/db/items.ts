@@ -84,6 +84,24 @@ export async function getRecentItems(limit = 10): Promise<ItemCardData[]> {
   return rows.map(mapItem);
 }
 
+export async function getItemsByType(
+  itemTypeId: string,
+): Promise<ItemCardData[]> {
+  const userId = await getDemoUserId();
+  if (!userId) return [];
+
+  const rows = await prisma.item.findMany({
+    where: { userId, itemTypeId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      itemType: { select: { id: true, name: true, icon: true, color: true } },
+      tags: { select: { name: true } },
+    },
+  });
+
+  return rows.map(mapItem);
+}
+
 export type SidebarItemType = {
   id: string;
   name: string;
