@@ -14,10 +14,12 @@ Read the following to get the full context of the project:
 ## Commands
 
 ```bash
-npm run dev      # Start dev server at http://localhost:3000
-npm run build    # Production build
-npm run start    # Run production build
-npm run lint     # Run ESLint
+npm run dev         # Start dev server at http://localhost:3000
+npm run build       # Production build
+npm run start       # Run production build
+npm run lint        # Run ESLint
+npm run test        # Run Vitest once (server actions & utilities only)
+npm run test:watch  # Run Vitest in watch mode
 ```
 
 ## Stack
