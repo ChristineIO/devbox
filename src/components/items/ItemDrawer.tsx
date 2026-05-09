@@ -1,13 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Copy, Pencil, Pin, Star, Trash2 } from "lucide-react";
 
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Toast } from "@/components/ui/toast";
 import { iconMap } from "@/lib/icon-map";
 import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/lib/db/items";
+import { deleteItem } from "@/actions/items";
 import { useItemDrawer } from "./ItemDrawerContext";
 import { ItemEditForm } from "./ItemEditForm";
 
@@ -24,9 +37,11 @@ function formatDateTime(date: Date) {
 function ActionBar({
   item,
   onEdit,
+  onDelete,
 }: {
   item: ItemDetail;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const copyValue = item.content ?? item.url ?? "";
@@ -87,6 +102,7 @@ function ActionBar({
       <Button
         variant="ghost"
         size="icon-sm"
+        onClick={onDelete}
         className="ml-auto text-destructive hover:text-destructive"
         title="Delete"
         aria-label="Delete"
@@ -215,15 +231,20 @@ function ItemBody({ item }: { item: ItemDetail }) {
 
 export function ItemDrawer() {
   const { selected, close } = useItemDrawer();
+  const router = useRouter();
+  const toast = Toast.useToastManager();
   const [detail, setDetail] = useState<ItemDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, startDelete] = useTransition();
 
   useEffect(() => {
     if (!selected) {
       setDetail(null);
       setError(null);
       setMode("view");
+      setDeleteOpen(false);
       return;
     }
 
@@ -231,6 +252,7 @@ export function ItemDrawer() {
     setDetail(null);
     setError(null);
     setMode("view");
+    setDeleteOpen(false);
 
     fetch(`/api/items/${selected.id}`)
       .then(async (res) => {
@@ -255,44 +277,111 @@ export function ItemDrawer() {
     };
   }, [selected]);
 
+  function handleConfirmDelete() {
+    if (!detail) return;
+    const title = detail.title;
+    startDelete(async () => {
+      const result = await deleteItem(detail.id);
+      if (result.success) {
+        toast.add({
+          type: "success",
+          title: "Item deleted",
+          description: title,
+        });
+        setDeleteOpen(false);
+        close();
+        router.refresh();
+      } else {
+        toast.add({
+          type: "error",
+          title: "Delete failed",
+          description: result.error,
+        });
+      }
+    });
+  }
+
   return (
-    <Sheet
-      open={!!selected}
-      onOpenChange={(open) => {
-        if (!open) close();
-      }}
-    >
-      <SheetContent
-        side="right"
-        className="w-full p-0 sm:max-w-md"
-        showCloseButton={false}
+    <>
+      <Sheet
+        open={!!selected}
+        onOpenChange={(open) => {
+          if (!open) close();
+        }}
       >
-        {detail ? (
-          mode === "edit" ? (
-            <ItemEditForm
-              item={detail}
-              onCancel={() => setMode("view")}
-              onSaved={(updated) => {
-                setDetail({
-                  ...updated,
-                  createdAt: new Date(updated.createdAt),
-                  updatedAt: new Date(updated.updatedAt),
-                });
-                setMode("view");
-              }}
-            />
+        <SheetContent
+          side="right"
+          className="w-full p-0 sm:max-w-md"
+          showCloseButton={false}
+        >
+          {detail ? (
+            mode === "edit" ? (
+              <ItemEditForm
+                item={detail}
+                onCancel={() => setMode("view")}
+                onSaved={(updated) => {
+                  setDetail({
+                    ...updated,
+                    createdAt: new Date(updated.createdAt),
+                    updatedAt: new Date(updated.updatedAt),
+                  });
+                  setMode("view");
+                }}
+              />
+            ) : (
+              <>
+                <ActionBar
+                  item={detail}
+                  onEdit={() => setMode("edit")}
+                  onDelete={() => setDeleteOpen(true)}
+                />
+                <ItemBody item={detail} />
+              </>
+            )
+          ) : error ? (
+            <div className="p-4 text-sm text-destructive">{error}</div>
           ) : (
-            <>
-              <ActionBar item={detail} onEdit={() => setMode("edit")} />
-              <ItemBody item={detail} />
-            </>
-          )
-        ) : error ? (
-          <div className="p-4 text-sm text-destructive">{error}</div>
-        ) : (
-          <DrawerSkeleton />
-        )}
-      </SheetContent>
-    </Sheet>
+            <DrawerSkeleton />
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {detail?.title
+                ? `"${detail.title}" will be permanently removed. This cannot be undone.`
+                : "This item will be permanently removed. This cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              render={
+                <Button type="button" variant="outline" disabled={isDeleting} />
+              }
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              render={
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDeleting}
+                />
+              }
+            >
+              {isDeleting ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
