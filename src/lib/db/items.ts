@@ -204,6 +204,72 @@ export async function deleteItem(
   return result.count > 0;
 }
 
+export type CreatableItemType = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+};
+
+const PRO_TYPE_NAMES = new Set(["file", "image"]);
+
+export async function getCreatableItemTypes(): Promise<CreatableItemType[]> {
+  const rows = await prisma.itemType.findMany({
+    where: { isSystem: true, userId: null },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, icon: true, color: true },
+  });
+  return rows.filter((t) => !PRO_TYPE_NAMES.has(t.name));
+}
+
+export type CreateItemInput = {
+  itemTypeId: string;
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+};
+
+export async function createItem(
+  userId: string,
+  input: CreateItemInput,
+): Promise<ItemDetail | null> {
+  const type = await prisma.itemType.findFirst({
+    where: {
+      id: input.itemTypeId,
+      OR: [{ isSystem: true, userId: null }, { userId }],
+    },
+    select: { id: true, name: true },
+  });
+  if (!type) return null;
+
+  const contentType = type.name === "link" ? "url" : "text";
+
+  const created = await prisma.item.create({
+    data: {
+      userId,
+      itemTypeId: type.id,
+      title: input.title,
+      description: input.description,
+      contentType,
+      content: input.content,
+      url: input.url,
+      language: input.language,
+      tags: {
+        connectOrCreate: input.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+    select: { id: true },
+  });
+
+  return findItemDetail(created.id, userId);
+}
+
 export type SidebarItemType = {
   id: string;
   name: string;
