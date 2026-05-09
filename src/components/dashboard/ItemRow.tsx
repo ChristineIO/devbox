@@ -1,23 +1,27 @@
-import Link from "next/link";
+"use client";
+
 import { Pin, Star } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { iconMap } from "@/lib/icon-map";
 import type { ItemCardData } from "@/lib/db/items";
+import { useItemDrawer } from "@/components/items/ItemDrawerContext";
 
 function formatDate(date: Date) {
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function ItemRow({ item }: { item: ItemCardData }) {
   const { type } = item;
   const Icon = iconMap[type.icon] ?? null;
+  const { open } = useItemDrawer();
 
   return (
-    <Link
-      href={`/items/${type.id}/${item.id}`}
+    <button
+      type="button"
+      onClick={() => open(item)}
       className={cn(
-        "group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition hover:border-foreground/20",
+        "group flex w-full items-center gap-4 rounded-lg border border-border bg-card p-4 text-left transition hover:border-foreground/20 focus-visible:border-foreground/20 focus-visible:outline-none",
       )}
       style={{ borderLeftColor: type.color, borderLeftWidth: 3 }}
     >
@@ -60,6 +64,6 @@ export function ItemRow({ item }: { item: ItemCardData }) {
       <span className="shrink-0 text-xs text-muted-foreground">
         {formatDate(item.createdAt)}
       </span>
-    </Link>
+    </button>
   );
 }

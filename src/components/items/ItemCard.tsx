@@ -1,21 +1,25 @@
-import Link from "next/link";
+"use client";
+
 import { Pin, Star } from "lucide-react";
 
 import { iconMap } from "@/lib/icon-map";
 import type { ItemCardData } from "@/lib/db/items";
+import { useItemDrawer } from "./ItemDrawerContext";
 
 function formatDate(date: Date) {
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export function ItemCard({ item }: { item: ItemCardData }) {
   const { type } = item;
   const Icon = iconMap[type.icon] ?? null;
+  const { open } = useItemDrawer();
 
   return (
-    <Link
-      href={`/items/${type.id}/${item.id}`}
-      className="group flex flex-col rounded-lg border border-border bg-card p-4 transition hover:border-foreground/20"
+    <button
+      type="button"
+      onClick={() => open(item)}
+      className="group flex flex-col rounded-lg border border-border bg-card p-4 text-left transition hover:border-foreground/20 focus-visible:border-foreground/20 focus-visible:outline-none"
       style={{ borderLeftColor: type.color, borderLeftWidth: 3 }}
     >
       <div className="flex items-start gap-3">
@@ -59,6 +63,6 @@ export function ItemCard({ item }: { item: ItemCardData }) {
           ))}
         </div>
       )}
-    </Link>
+    </button>
   );
 }

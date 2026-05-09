@@ -102,6 +102,50 @@ export async function getItemsByType(
   return rows.map(mapItem);
 }
 
+export type ItemDetail = ItemCardData & {
+  contentType: string;
+  content: string | null;
+  url: string | null;
+  fileUrl: string | null;
+  fileName: string | null;
+  fileSize: number | null;
+  language: string | null;
+  updatedAt: Date;
+  collections: { id: string; name: string }[];
+};
+
+export async function getItemById(itemId: string): Promise<ItemDetail | null> {
+  const userId = await getDemoUserId();
+  if (!userId) return null;
+
+  const row = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    include: {
+      itemType: { select: { id: true, name: true, icon: true, color: true } },
+      tags: { select: { name: true } },
+      collections: {
+        select: {
+          collection: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+  if (!row) return null;
+
+  return {
+    ...mapItem(row),
+    contentType: row.contentType,
+    content: row.content,
+    url: row.url,
+    fileUrl: row.fileUrl,
+    fileName: row.fileName,
+    fileSize: row.fileSize,
+    language: row.language,
+    updatedAt: row.updatedAt,
+    collections: row.collections.map((c) => c.collection),
+  };
+}
+
 export type SidebarItemType = {
   id: string;
   name: string;
