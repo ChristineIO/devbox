@@ -1,0 +1,149 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockAuth = vi.fn();
+const mockGetDemoUserId = vi.fn();
+const mockUpdateItemQuery = vi.fn();
+
+vi.mock("@/auth", () => ({
+  auth: () => mockAuth(),
+}));
+
+vi.mock("@/lib/db/user", () => ({
+  getDemoUserId: () => mockGetDemoUserId(),
+}));
+
+vi.mock("@/lib/db/items", () => ({
+  updateItem: (...args: unknown[]) => mockUpdateItemQuery(...args),
+}));
+
+const { updateItem } = await import("./items");
+
+const baseInput = {
+  title: "New title",
+  description: "desc",
+  content: "code",
+  url: null,
+  language: "ts",
+  tags: ["a", "b"],
+};
+
+const sampleDetail = {
+  id: "item-1",
+  title: "New title",
+  description: "desc",
+  isFavorite: false,
+  isPinned: false,
+  tags: ["a", "b"],
+  createdAt: new Date(),
+  type: { id: "t1", name: "snippet", icon: "Code", color: "#000" },
+  contentType: "text",
+  content: "code",
+  url: null,
+  fileUrl: null,
+  fileName: null,
+  fileSize: null,
+  language: "ts",
+  updatedAt: new Date(),
+  collections: [],
+};
+
+describe("updateItem action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockGetDemoUserId.mockReset();
+    mockUpdateItemQuery.mockReset();
+  });
+
+  it("rejects when there is no session", async () => {
+    mockAuth.mockResolvedValue(null);
+
+    const result = await updateItem("item-1", baseInput);
+
+    expect(result).toEqual({ success: false, error: "Not signed in" });
+    expect(mockUpdateItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects empty titles via Zod", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+
+    const result = await updateItem("item-1", { ...baseInput, title: "   " });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors?.title?.[0]).toBeDefined();
+    }
+    expect(mockUpdateItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid URLs", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+
+    const result = await updateItem("item-1", {
+      ...baseInput,
+      url: "not-a-url",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors?.url?.[0]).toBeDefined();
+    }
+  });
+
+  it("returns 'Item not found' when ownership check fails", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockUpdateItemQuery.mockResolvedValue(null);
+
+    const result = await updateItem("item-1", baseInput);
+
+    expect(result).toEqual({ success: false, error: "Item not found" });
+  });
+
+  it("trims fields, dedupes tags, and returns the updated detail", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockUpdateItemQuery.mockResolvedValue(sampleDetail);
+
+    const result = await updateItem("item-1", {
+      title: "  New title  ",
+      description: "  desc  ",
+      content: "  code  ",
+      url: null,
+      language: "  ts  ",
+      tags: ["a", "a", " b "],
+    });
+
+    expect(result).toEqual({ success: true, data: sampleDetail });
+    expect(mockUpdateItemQuery).toHaveBeenCalledTimes(1);
+    const [itemId, userId, payload] = mockUpdateItemQuery.mock.calls[0];
+    expect(itemId).toBe("item-1");
+    expect(userId).toBe("u");
+    expect(payload).toMatchObject({
+      title: "New title",
+      description: "desc",
+      content: "code",
+      url: null,
+      language: "ts",
+      tags: ["a", "b"],
+    });
+  });
+
+  it("converts empty strings to null for optional fields", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockUpdateItemQuery.mockResolvedValue(sampleDetail);
+
+    await updateItem("item-1", {
+      title: "x",
+      description: "",
+      content: "   ",
+      url: null,
+      language: "",
+      tags: [],
+    });
+
+    const [, , payload] = mockUpdateItemQuery.mock.calls[0];
+    expect(payload).toMatchObject({
+      description: null,
+      content: null,
+      language: null,
+    });
+  });
+});

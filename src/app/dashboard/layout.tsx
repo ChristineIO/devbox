@@ -2,6 +2,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { SidebarProvider } from "@/components/dashboard/SidebarContext";
 import { TopBar } from "@/components/dashboard/TopBar";
 import { ItemDrawerProvider } from "@/components/items/ItemDrawerContext";
+import { ToastProvider } from "@/components/ui/toast";
 import { getSidebarItemTypes } from "@/lib/db/items";
 import { getSidebarCollections } from "@/lib/db/collections";
 import { getSidebarUser } from "@/lib/db/user";
@@ -21,19 +22,21 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <ItemDrawerProvider>
-        <div className="flex min-h-screen bg-background text-foreground">
-          <Sidebar
-            itemTypes={itemTypes}
-            collections={collections}
-            user={user}
-          />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <TopBar />
-            <main className="flex-1 p-6">{children}</main>
+      <ToastProvider>
+        <ItemDrawerProvider>
+          <div className="flex min-h-screen bg-background text-foreground">
+            <Sidebar
+              itemTypes={itemTypes}
+              collections={collections}
+              user={user}
+            />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <TopBar />
+              <main className="flex-1 p-6">{children}</main>
+            </div>
           </div>
-        </div>
-      </ItemDrawerProvider>
+        </ItemDrawerProvider>
+      </ToastProvider>
     </SidebarProvider>
   );
 }
