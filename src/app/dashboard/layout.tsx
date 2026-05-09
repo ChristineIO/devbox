@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { SidebarProvider } from "@/components/dashboard/SidebarContext";
 import { TopBar } from "@/components/dashboard/TopBar";
+import { ItemDrawerProvider } from "@/components/items/ItemDrawerContext";
 import { getSidebarItemTypes } from "@/lib/db/items";
 import { getSidebarCollections } from "@/lib/db/collections";
 import { getSidebarUser } from "@/lib/db/user";
@@ -20,17 +21,19 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-background text-foreground">
-        <Sidebar
-          itemTypes={itemTypes}
-          collections={collections}
-          user={user}
-        />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar />
-          <main className="flex-1 p-6">{children}</main>
+      <ItemDrawerProvider>
+        <div className="flex min-h-screen bg-background text-foreground">
+          <Sidebar
+            itemTypes={itemTypes}
+            collections={collections}
+            user={user}
+          />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar />
+            <main className="flex-1 p-6">{children}</main>
+          </div>
         </div>
-      </div>
+      </ItemDrawerProvider>
     </SidebarProvider>
   );
 }
