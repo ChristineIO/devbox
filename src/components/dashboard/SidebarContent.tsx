@@ -24,16 +24,26 @@ type Props = {
   user: SidebarUser | null;
 };
 
-function Brand({ collapsed }: { collapsed: boolean }) {
+function Brand({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
   return (
-    <div className="flex h-14 shrink-0 items-center gap-2 px-3">
+    <Link
+      href="/dashboard"
+      onClick={onNavigate}
+      className="flex h-14 shrink-0 items-center gap-2 px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
       <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <span className="font-heading text-sm font-semibold">D</span>
       </div>
       {!collapsed && (
         <span className="font-heading text-base font-semibold">DevBox</span>
       )}
-    </div>
+    </Link>
   );
 }
 
@@ -86,7 +96,7 @@ export function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
-      <Brand collapsed={collapsed} />
+      <Brand collapsed={collapsed} onNavigate={onNavigate} />
       <Separator />
 
       <ScrollArea className="flex-1">
