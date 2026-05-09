@@ -132,7 +132,7 @@ export function NewItemDialog({ types }: Props) {
           </Button>
         }
       />
-      <DialogContent className="flex max-h-[90vh] max-w-lg flex-col gap-0 p-0">
+      <DialogContent className="flex max-h-[85vh] max-w-md flex-col gap-0 p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>New item</DialogTitle>
           <DialogDescription>
