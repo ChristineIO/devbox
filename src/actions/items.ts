@@ -3,7 +3,11 @@
 import { z } from "zod";
 
 import { auth } from "@/auth";
-import { updateItem as updateItemQuery, type ItemDetail } from "@/lib/db/items";
+import {
+  deleteItem as deleteItemQuery,
+  updateItem as updateItemQuery,
+  type ItemDetail,
+} from "@/lib/db/items";
 
 const updateItemSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
@@ -66,4 +70,23 @@ export async function updateItem(
   }
 
   return { success: true, data: updated };
+}
+
+export type DeleteItemResult =
+  | { success: true }
+  | { success: false; error: string };
+
+export async function deleteItem(itemId: string): Promise<DeleteItemResult> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) {
+    return { success: false, error: "Not signed in" };
+  }
+
+  const deleted = await deleteItemQuery(itemId, userId);
+  if (!deleted) {
+    return { success: false, error: "Item not found" };
+  }
+
+  return { success: true };
 }

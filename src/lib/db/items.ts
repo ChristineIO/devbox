@@ -194,6 +194,16 @@ export async function updateItem(
   return findItemDetail(itemId, userId);
 }
 
+export async function deleteItem(
+  itemId: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await prisma.item.deleteMany({
+    where: { id: itemId, userId },
+  });
+  return result.count > 0;
+}
+
 export type SidebarItemType = {
   id: string;
   name: string;

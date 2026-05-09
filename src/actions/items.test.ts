@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockAuth = vi.fn();
 const mockGetDemoUserId = vi.fn();
 const mockUpdateItemQuery = vi.fn();
+const mockDeleteItemQuery = vi.fn();
 
 vi.mock("@/auth", () => ({
   auth: () => mockAuth(),
@@ -14,9 +15,10 @@ vi.mock("@/lib/db/user", () => ({
 
 vi.mock("@/lib/db/items", () => ({
   updateItem: (...args: unknown[]) => mockUpdateItemQuery(...args),
+  deleteItem: (...args: unknown[]) => mockDeleteItemQuery(...args),
 }));
 
-const { updateItem } = await import("./items");
+const { updateItem, deleteItem } = await import("./items");
 
 const baseInput = {
   title: "New title",
@@ -52,6 +54,7 @@ describe("updateItem action", () => {
     mockAuth.mockReset();
     mockGetDemoUserId.mockReset();
     mockUpdateItemQuery.mockReset();
+    mockDeleteItemQuery.mockReset();
   });
 
   it("rejects when there is no session", async () => {
@@ -145,5 +148,41 @@ describe("updateItem action", () => {
       content: null,
       language: null,
     });
+  });
+});
+
+describe("deleteItem action", () => {
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockDeleteItemQuery.mockReset();
+  });
+
+  it("rejects when there is no session", async () => {
+    mockAuth.mockResolvedValue(null);
+
+    const result = await deleteItem("item-1");
+
+    expect(result).toEqual({ success: false, error: "Not signed in" });
+    expect(mockDeleteItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("returns 'Item not found' when ownership check fails", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockDeleteItemQuery.mockResolvedValue(false);
+
+    const result = await deleteItem("item-1");
+
+    expect(result).toEqual({ success: false, error: "Item not found" });
+    expect(mockDeleteItemQuery).toHaveBeenCalledWith("item-1", "u");
+  });
+
+  it("returns success when the row is deleted", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockDeleteItemQuery.mockResolvedValue(true);
+
+    const result = await deleteItem("item-1");
+
+    expect(result).toEqual({ success: true });
+    expect(mockDeleteItemQuery).toHaveBeenCalledWith("item-1", "u");
   });
 });
