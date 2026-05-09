@@ -1,10 +1,14 @@
-import { Plus, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NewItemDialog } from "@/components/items/NewItemDialog";
+import { getCreatableItemTypes } from "@/lib/db/items";
 import { SidebarToggle } from "./SidebarToggle";
 
-export function TopBar() {
+export async function TopBar() {
+  const creatableTypes = await getCreatableItemTypes();
+
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background px-4">
       <SidebarToggle />
@@ -23,10 +27,7 @@ export function TopBar() {
         <Button variant="outline" size="sm">
           New Collection
         </Button>
-        <Button size="sm">
-          <Plus className="size-4" />
-          New Item
-        </Button>
+        <NewItemDialog types={creatableTypes} />
       </div>
     </header>
   );

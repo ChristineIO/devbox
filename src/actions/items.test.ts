@@ -4,6 +4,7 @@ const mockAuth = vi.fn();
 const mockGetDemoUserId = vi.fn();
 const mockUpdateItemQuery = vi.fn();
 const mockDeleteItemQuery = vi.fn();
+const mockCreateItemQuery = vi.fn();
 
 vi.mock("@/auth", () => ({
   auth: () => mockAuth(),
@@ -16,9 +17,10 @@ vi.mock("@/lib/db/user", () => ({
 vi.mock("@/lib/db/items", () => ({
   updateItem: (...args: unknown[]) => mockUpdateItemQuery(...args),
   deleteItem: (...args: unknown[]) => mockDeleteItemQuery(...args),
+  createItem: (...args: unknown[]) => mockCreateItemQuery(...args),
 }));
 
-const { updateItem, deleteItem } = await import("./items");
+const { updateItem, deleteItem, createItem } = await import("./items");
 
 const baseInput = {
   title: "New title",
@@ -184,5 +186,95 @@ describe("deleteItem action", () => {
 
     expect(result).toEqual({ success: true });
     expect(mockDeleteItemQuery).toHaveBeenCalledWith("item-1", "u");
+  });
+});
+
+describe("createItem action", () => {
+  const baseInput = {
+    itemTypeId: "type-1",
+    title: "  Hello  ",
+    description: "  desc  ",
+    content: "  body  ",
+    url: null,
+    language: "  ts  ",
+    tags: ["a", "a", " b "],
+  };
+
+  beforeEach(() => {
+    mockAuth.mockReset();
+    mockCreateItemQuery.mockReset();
+  });
+
+  it("rejects when there is no session", async () => {
+    mockAuth.mockResolvedValue(null);
+
+    const result = await createItem(baseInput);
+
+    expect(result).toEqual({ success: false, error: "Not signed in" });
+    expect(mockCreateItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects empty titles via Zod", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+
+    const result = await createItem({ ...baseInput, title: "   " });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors?.title?.[0]).toBeDefined();
+    }
+    expect(mockCreateItemQuery).not.toHaveBeenCalled();
+  });
+
+  it("rejects missing item type", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+
+    const result = await createItem({ ...baseInput, itemTypeId: "" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors?.itemTypeId?.[0]).toBeDefined();
+    }
+  });
+
+  it("rejects invalid URLs", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+
+    const result = await createItem({ ...baseInput, url: "not-a-url" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.fieldErrors?.url?.[0]).toBeDefined();
+    }
+  });
+
+  it("returns 'Invalid item type' when the DB rejects the type", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    mockCreateItemQuery.mockResolvedValue(null);
+
+    const result = await createItem(baseInput);
+
+    expect(result).toEqual({ success: false, error: "Invalid item type" });
+  });
+
+  it("trims, dedupes tags, and forwards the cleaned payload", async () => {
+    mockAuth.mockResolvedValue({ user: { id: "u" } });
+    const fakeDetail = { id: "item-1", title: "Hello" };
+    mockCreateItemQuery.mockResolvedValue(fakeDetail);
+
+    const result = await createItem(baseInput);
+
+    expect(result).toEqual({ success: true, data: fakeDetail });
+    const [userId, payload] = mockCreateItemQuery.mock.calls[0];
+    expect(userId).toBe("u");
+    expect(payload).toMatchObject({
+      itemTypeId: "type-1",
+      title: "Hello",
+      description: "desc",
+      content: "body",
+      url: null,
+      language: "ts",
+      tags: ["a", "b"],
+    });
   });
 });
