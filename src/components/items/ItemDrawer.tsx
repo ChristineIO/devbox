@@ -9,6 +9,7 @@ import { iconMap } from "@/lib/icon-map";
 import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/lib/db/items";
 import { useItemDrawer } from "./ItemDrawerContext";
+import { ItemEditForm } from "./ItemEditForm";
 
 function formatDateTime(date: Date) {
   return new Date(date).toLocaleString("en-US", {
@@ -20,7 +21,13 @@ function formatDateTime(date: Date) {
   });
 }
 
-function ActionBar({ item }: { item: ItemDetail }) {
+function ActionBar({
+  item,
+  onEdit,
+}: {
+  item: ItemDetail;
+  onEdit: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const copyValue = item.content ?? item.url ?? "";
 
@@ -71,6 +78,7 @@ function ActionBar({ item }: { item: ItemDetail }) {
       <Button
         variant="ghost"
         size="icon-sm"
+        onClick={onEdit}
         title="Edit"
         aria-label="Edit"
       >
@@ -209,17 +217,20 @@ export function ItemDrawer() {
   const { selected, close } = useItemDrawer();
   const [detail, setDetail] = useState<ItemDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<"view" | "edit">("view");
 
   useEffect(() => {
     if (!selected) {
       setDetail(null);
       setError(null);
+      setMode("view");
       return;
     }
 
     let cancelled = false;
     setDetail(null);
     setError(null);
+    setMode("view");
 
     fetch(`/api/items/${selected.id}`)
       .then(async (res) => {
@@ -257,10 +268,25 @@ export function ItemDrawer() {
         showCloseButton={false}
       >
         {detail ? (
-          <>
-            <ActionBar item={detail} />
-            <ItemBody item={detail} />
-          </>
+          mode === "edit" ? (
+            <ItemEditForm
+              item={detail}
+              onCancel={() => setMode("view")}
+              onSaved={(updated) => {
+                setDetail({
+                  ...updated,
+                  createdAt: new Date(updated.createdAt),
+                  updatedAt: new Date(updated.updatedAt),
+                });
+                setMode("view");
+              }}
+            />
+          ) : (
+            <>
+              <ActionBar item={detail} onEdit={() => setMode("edit")} />
+              <ItemBody item={detail} />
+            </>
+          )
         ) : error ? (
           <div className="p-4 text-sm text-destructive">{error}</div>
         ) : (

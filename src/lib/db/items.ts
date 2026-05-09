@@ -118,6 +118,13 @@ export async function getItemById(itemId: string): Promise<ItemDetail | null> {
   const userId = await getDemoUserId();
   if (!userId) return null;
 
+  return findItemDetail(itemId, userId);
+}
+
+async function findItemDetail(
+  itemId: string,
+  userId: string,
+): Promise<ItemDetail | null> {
   const row = await prisma.item.findFirst({
     where: { id: itemId, userId },
     include: {
@@ -144,6 +151,47 @@ export async function getItemById(itemId: string): Promise<ItemDetail | null> {
     updatedAt: row.updatedAt,
     collections: row.collections.map((c) => c.collection),
   };
+}
+
+export type UpdateItemInput = {
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+};
+
+export async function updateItem(
+  itemId: string,
+  userId: string,
+  input: UpdateItemInput,
+): Promise<ItemDetail | null> {
+  const owned = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  });
+  if (!owned) return null;
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: {
+      title: input.title,
+      description: input.description,
+      content: input.content,
+      url: input.url,
+      language: input.language,
+      tags: {
+        set: [],
+        connectOrCreate: input.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+  });
+
+  return findItemDetail(itemId, userId);
 }
 
 export type SidebarItemType = {
